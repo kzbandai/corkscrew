@@ -1,0 +1,20 @@
+{
+  "name": "kzbandai/corkscrew",
+  "description": "simple PDO wrapper by PHP7",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Kazuki BANDAI",
+      "email": "nisigin@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.0.0",
+    "pimple/pimple": "~3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Corkscrew\\": "src/"
+    }
+  }
+}
