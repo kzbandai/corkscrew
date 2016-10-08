@@ -40,18 +40,20 @@ class Application
         }
     }
 
-    public function prepareStatement(string $name, string $sql)
+    public function prepareStatement(string $name, string $sql): Application
     {
         try {
             $this->statements[$name] = $this->pdo->prepare($sql);
         } catch (PDOException $e) {
             throw new CorkscrewException('Database Error');
         }
+
+        return $this;
     }
 
-    public function setParams(string $name, array $params)
+    public function setParams(string $name, array $params): Application
     {
-        if (!$name || $this->statements[$name]) {
+        if (!$name || !$this->statements[$name]) {
             throw new InvalidArgumentException();
         }
 
@@ -69,11 +71,13 @@ class Application
         } catch (PDOException $e) {
             throw new CorkscrewException('Database Error');
         }
+
+        return $this;
     }
 
-    public function exec(string $name)
+    public function exec(string $name): array
     {
-        if (!$name || $this->statements[$name]) {
+        if (!$name || !$this->statements[$name]) {
             throw new InvalidArgumentException();
         }
 
@@ -92,9 +96,17 @@ class Application
             $this->pdo->rollBack();
             throw new CorkscrewException('Database Error');
         }
+
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if (!$result) {
+            throw new InvalidArgumentException();
+        }
+
+        return $result;
     }
 
-    public function select(string $query): PDOStatement
+    public function select(string $query): array
     {
         if ($this->validateQuery($query, self::SELECT)) {
             try {
