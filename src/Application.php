@@ -30,7 +30,7 @@ class Application
 
         $config['dns'] = $this->getDns($config['dns']);
         $option = array_merge($config['option'], [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ]);
 
         try {
@@ -38,6 +38,15 @@ class Application
         } catch (PDOException $e) {
             throw new CorkscrewException('Database Error');
         }
+    }
+
+    public function getStatement(string $name): PDOStatement
+    {
+        if ($name || $this->statements[$name]) {
+            return $this->statements[$name];
+        }
+
+        throw new InvalidArgumentException();
     }
 
     public function prepareStatement(string $name, string $sql): Application
@@ -75,7 +84,12 @@ class Application
         return $this;
     }
 
-    public function exec(string $name): array
+    /**
+     * @param string $name
+     * @return array|bool
+     * @throws CorkscrewException
+     */
+    public function exec(string $name)
     {
         if (!$name || !$this->statements[$name]) {
             throw new InvalidArgumentException();
@@ -87,7 +101,7 @@ class Application
         try {
             /* @var PDOStatement $statement */
             $this->pdo->beginTransaction();
-            $statement->execute();
+            $exec_result = $statement->execute();
 
             if ($this->pdo->inTransaction()) {
                 $this->pdo->commit();
@@ -97,13 +111,16 @@ class Application
             throw new CorkscrewException('Database Error');
         }
 
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        if ($this->validateQuery($statement->queryString, self::SELECT)) {
+            $data = $statement->fetchAll(PDO::FETCH_ASSOC);
+            if (!$data) {
+                throw new InvalidArgumentException();
+            }
 
-        if (!$result) {
-            throw new InvalidArgumentException();
+            return $data;
         }
 
-        return $result;
+        return $exec_result;
     }
 
     public function select(string $query): array
@@ -160,7 +177,7 @@ class Application
                 throw new CorkscrewException('Database Error');
             }
 
-            return $statement->fetch(PDO::FETCH_ASSOC);
+            return $statement->fetchAll(PDO::FETCH_ASSOC);
         }
 
         throw new InvalidArgumentException();
