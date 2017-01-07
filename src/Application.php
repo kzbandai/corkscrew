@@ -6,7 +6,6 @@ namespace Corkscrew;
 use PDO;
 use PDOStatement;
 use PDOException;
-use CorkscrewException;
 use InvalidArgumentException;
 
 class Application
